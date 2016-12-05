@@ -26,3 +26,4 @@ Components
  - Armonica --- Music theory and analysis.
  - Scribo --- Notation/printing via Lilypond, Gregorio, and other formats (MusicXML, ABC).
  - Medio --- MIDI control.
+ - Boustrophedon --- JavaScript wrapper/API/something (JSON) 

@@ -16,7 +16,7 @@ def test_enharmonics():
 
 def test_pitches_by_abs():
     assert len(pitchclass.es.pitches_by_abs(1)) == 3
-    assert pitchclass.G in pitchclass.es.pitches_by_abs(8)
+    assert pitchclass.G in pitchclass.es.pitches_by_abs(7)
     test_set = pitchclass.es.pitches_by_abs(12)
     assert type(test_set) == pitchclass.PitchClassSet
 

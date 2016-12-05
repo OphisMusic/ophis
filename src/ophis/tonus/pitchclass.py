@@ -36,16 +36,12 @@ class PitchClass:
             return enharmonics
 
     def augment(self):
-        augments = es.pitches_by_abs(self.abs_num + 1)
+        augments = es.pitches_by_abs((self.abs_num + 1)%12)
         return augments
-    # return a PitchClass OR
-    # return a set of pitchclasses
 
     def diminish(self):
-        dims = es.pitches_by_abs(self.abs_num - 1)
+        dims = es.pitches_by_abs((self.abs_num - 1)%12)
         return dims
-
-    ## fix aug and dim for 0-1 and 12+1
 
     #def solfege(self, tonic=C)
     # return string
@@ -59,11 +55,7 @@ class PitchClassSet(set):
 
     def pitches_by_abs(self, abs_num):
         pitches = PitchClassSet([])
-        # maybe theres a better way to deal with modulo pitch math?
-        if abs_num < 1:
-            abs_num = 12 + abs_num
-        if abs_num > 12:
-            abs_num = abs_num - 12
+        abs_num = abs_num%12
         for pitch in self:
             if pitch.abs_num == abs_num:
                 pitches.add(pitch)
@@ -81,13 +73,13 @@ es = PitchClassSet([])
 
 
 white_notes = {
- "C" : [1, 1, "do"],
- "D" : [2, 3, "re"],
- "E" : [3, 5, "mi"],
- "F" : [4, 6, "fa"],
- "G" : [5, 8, "sol"],
- "A" : [6, 10, "la"],
- "B" : [7, 12, "ti"]
+ "C" : [0, 0, "do"],
+ "D" : [1, 2, "re"],
+ "E" : [2, 4, "mi"],
+ "F" : [3, 5, "fa"],
+ "G" : [4, 7, "sol"],
+ "A" : [5, 9, "la"],
+ "B" : [6, 11, "ti"]
 }
 
 
@@ -139,15 +131,11 @@ for letter, letter_vals in white_notes.items():
         "name" : letter + mod,
         "letter" : letter,
         "letter_num" : letter_vals[0],
-        "abs_num" : letter_vals[1] + mod_val["value"],
+        "abs_num" : (letter_vals[1] + mod_val["value"])%12,
         "mod_num" : mod_val["value"],
         "unicode" : letter + mod_val["unicode"],
         "ascii" : letter + mod_val["ascii"],
         "verbose" : letter + " " + mod_val["verbose"],
         "lilypond" : letter + mod_val["lilypond"]
         }
-        if (pitchclass_attrs["abs_num"] < 1):
-            pitchclass_attrs["abs_num"] = 12 + pitchclass_attrs["abs_num"]
-        if (pitchclass_attrs["abs_num"] > 12):
-            pitchclass_attrs["abs_num"] = pitchclass_attrs["abs_num"] - 12
         setattr(module, pitchclass_name, PitchClass(pitchclass_attrs))
