@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-#
-# This file were created by Python Boilerplate. Use boilerplate to start simple
-# usable and best-practices compliant Python projects.
-#
-# Learn more about it at: http://github.com/fabiommendes/python-boilerplate/
-#
-
 import os
 import codecs
 from setuptools import setup, find_packages
@@ -27,15 +19,15 @@ setup(
     version=version,
     author='Adam Michael Wood',
     author_email='adam.michael.wood@gmail.com',
-    url='',
-    description='A short description for your project.',
+    url='http://github.com/ophismusic/ophis',
+    description='Core music theory and notation Library .',
     long_description=codecs.open('README.rst', 'rb', 'utf8').read(),
 
     # Classifiers (see https://pypi.python.org/pypi?%3Aaction=list_classifiers)
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
