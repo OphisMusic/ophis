@@ -24,6 +24,7 @@ Components
 - Mensura --- Time signatures, rhythms, note duration.
 - Nota --- Notes, note expressions.
 - Melodia --- Horizontal note structures (melodies, lines, voices, scales).
+- Lyrica --- lyrics, verses.
 - Chorda --- Vertical and two-dimensional note structures (chords, harmonies, polyphony).
 - Signum --- Clefs, staff and score expressions, additional markings.
 - Armonica --- Music theory and analysis.

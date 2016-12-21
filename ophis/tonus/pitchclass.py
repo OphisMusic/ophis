@@ -1,4 +1,5 @@
 import sys
+import itertools
 
 
 class PitchClass:
@@ -23,6 +24,7 @@ class PitchClass:
         # ascii -- for printing
         # verbose -- for printing
         # ly -- for outputting to lilypond
+        # s9n -- solmization; solfege (or other system) syllable
         #
         # The values attributes above apply for conventional Western music theory and notation, but may or may not apply to other systems.
         #
@@ -34,11 +36,32 @@ class PitchClass:
             enharmonics.discard(self)
         return enharmonics
 
-    def augment(self):
-        return self.essential_set.get_augments(self)
+    def augment(self, **kwargs):
+        """ Returns a PitchClass.
+        occ: Returns a PitchClass one half-step higher.
+
+        Actual implementation in the essential_set.
+
+        >>> occ.C.augment()
+        CSHARP
+        """
+        return self.essential_set.get_augment(self, kwargs)
 
     def diminish(self):
-        return self.essential_set.get_dims(self)
+        # returns a pitchclass
+        # occ: returns a pitchclass one half-step higher
+        return self.essential_set.get_dims(self, kwargs)
+
+    def __add__(self, N):
+        try:
+            # add like its a number
+            for _ in itertools.repeat(None, N):
+                # call augment N times, return last time
+        except TypeError:
+            try:
+                # add them like two pitchclasses and return a pitchclass set
+
+
 
 
 class PitchClassSet(set):
@@ -67,11 +90,9 @@ class EssentialPitchClassSet(PitchClassSet):
     def get_dims(self, pitchclass):
         pass
 
-es = PitchClassSet([])
 
 
     #def solfege(self, tonic=C)
     # return string
 
 #old and busted
-pitchclasses = []

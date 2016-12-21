@@ -1,1 +1,1 @@
-from ophis.tonus import tonus
+from . import pitchclass
