@@ -15,6 +15,7 @@ class Chroma(ABC):
         """Return self.name."""
         return
 
+    @property
     @abstractmethod
     def ascii(self):
         """
@@ -24,6 +25,7 @@ class Chroma(ABC):
         """
         return
 
+    @property
     @abstractmethod
     def unicode(self):
         r"""
@@ -34,21 +36,33 @@ class Chroma(ABC):
         return
 
     @abstractmethod
-    def augment(self):
+    def augment(self, mag=1):
         """Return one chroma higher."""
         return
 
     @abstractmethod
-    def diminish(self):
+    def diminish(self, mag=1):
         """Return one chroma lower."""
 
-    @abstractmethod
     def __add__(self, addend):
         """Return the sum of self and addend.
 
-        chroma + number = augmented chroma
-        chroma + chroma = set
+        Default implementation:
+        self + integer = augmented chroma
+        self + chroma = set
+
+        Particular Musical Systems may re-implement
+        to handle (for example) fractional augmentation.
         """
+        try:
+            result = self
+            for x in xrange(addend):
+                result = result.augment()
+            return result
+        except TypeError:
+            return chroma.ChromaSet(self, addend)
+
+
         return
 
     @abstractmethod
@@ -59,3 +73,5 @@ class Chroma(ABC):
         chroma - number = diminished chroma
         """
         return
+
+    class ChromaSet
