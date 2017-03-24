@@ -21,3 +21,6 @@ src/ophis/__meta__.py
 
 # Testing and temporary files
 .tox/
+
+# Filesystem
+.DS_Store
