@@ -1,5 +1,6 @@
 import pytest
 import ophis
+import itertools
 
 # Chroma Tests
 
@@ -18,6 +19,18 @@ def test_ophis_has_chroma():
 def test_seven_letters_and_five_modifiers():
     assert len(ophis.western_chroma_set) == 35
 
+
+def test_modifier_values_match_names():
+    for chroma in ophis.western_chroma_set:
+        if chroma.mod_val == 0:
+            assert "NATURAL" in chroma.verbose
+        if chroma.mod_val < 0:
+            assert "FLAT" in chroma.name
+            assert "FLAT" in chroma.verbose
+        if chroma.mod_val > 0:
+            assert "SHARP" in chroma.name
+            assert "SHARP" in chroma.verbose
+
 def test_enharmonics():
     assert ophis.FSHARP in ophis.GFLAT.enharmonics()
     assert ophis.GFLAT.enharmonics(False, "chroma")
@@ -25,8 +38,18 @@ def test_enharmonics():
         for enharmonic_note in chroma.enharmonics():
             assert chroma == enharmonic_note
 
+def test_chroma_set_enharmonic_checking():
+    assert ophis.ChromaSet({ophis.GFLAT, ophis.FSHARP}).is_enharmonic()
+    assert not ophis.ChromaSet({ophis.A, ophis.G}).is_enharmonic()
+    for chroma in ophis.western_chroma_set:
+        enharmonic_set = chroma.enharmonics()
+        for i in range(1, 12):
+            augmented_chroma = chroma + i
+            enharmonic_set.add(augmented_chroma)
+            assert not enharmonic_set.is_enharmonic()
 
-def test_augment():
+
+def test_augment_chroma():
     assert ophis.G.augment() is ophis.GSHARP
     assert ophis.B.augment() is ophis.C
     for chroma in ophis.western_chroma_set:
@@ -34,7 +57,7 @@ def test_augment():
         for i in range(12):
             assert int(chroma.augment(i)) == (int(chroma) + i)%12
 
-def test_diminish():
+def test_diminish_chroma():
     assert ophis.G.diminish() == ophis.GFLAT
     # should test IS Gflat.
     assert ophis.F.diminish() is ophis.E
@@ -93,3 +116,27 @@ def test_max_delta_is_tritone():
     for x in ophis.western_chroma_set:
         for y in ophis.western_chroma_set:
             assert x.delta(y) <= 6
+
+# Takes a long time... creates 6545 combinations
+def test_augment_chroma_set():
+    for x, y, z in itertools.combinations(ophis.western_chroma_set, 3):
+        s = ophis.ChromaSet({x, y, z})
+        s_aug = s.augment()
+        for chroma in s:
+            assert chroma.augment() in s_aug
+        for i in range(12):
+            s_aug = s.augment(i)
+            for chroma in s:
+                assert chroma.augment(i) in s_aug
+
+# Takes a long time... creates 6545 combinations
+def test_diminish_chroma_set():
+    for x, y, z in itertools.combinations(ophis.western_chroma_set, 3):
+        s = ophis.ChromaSet({x, y, z})
+        s_dim = s.diminish()
+        for chroma in s:
+            assert chroma.diminish() in s_dim
+        for i in range(12):
+            s_dim = s.diminish(i)
+            for chroma in s:
+                assert chroma.diminish(i) in s_dim

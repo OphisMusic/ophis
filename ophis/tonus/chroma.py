@@ -166,9 +166,8 @@ class ChromaSet(set):
             chroma, = self
             return chroma
         # if self has multiple values, raise value error
-        for x,y in itertools.combinations(self, 2):
-            if x != y:
-                raise ValueError("The chromae in the provided set are not enharmonic.")
+        if not self.is_enharmonic():
+            raise ValueError("The chromae in the provided set are not enharmonic.")
 
         for mod_val, chroma_set in self.modifier_groups(True).items():
             if len(chroma_set) == 1:
@@ -189,7 +188,8 @@ class ChromaSet(set):
             ##    return chroma
         return sorted_mod_group[0]
 
-
+    def is_enharmonic(self):
+        return all(x==y for x, y in itertools.combinations(self, 2))
 
     def modifier_groups(self, abs_vals=True):
         mod_vals = set()
@@ -212,21 +212,23 @@ class ChromaSet(set):
         """return ChromaSet of chroma enharmonic to the given chroma"""
         return self.chroma_by_value(int(chroma))
 
-    def augment(self, chroma, set_or_single="set", prefer="sharp"):
-        value = int(chroma) + 1
-        chromaset = self.chroma_by_value(value)
-        if set_or_single != "single":
-            return chromaset
-        else:
-            return chromaset.enharmonic_reduce()
+    def augment(self, half_steps=1):
+        new_set = ChromaSet()
+        for chroma in self:
+            new_set.add(chroma.augment(half_steps))
+        return new_set
 
-    def diminish(self, chroma, set_or_single="set", prefer="flat"):
-        value = int(chroma) - 1
-        chromaset = self.chroma_by_value(value)
-        if set_or_single != "single":
-            return chromaset
-        else:
-            return chromaset.enharmonic_reduce()
+    def diminish(self, half_steps=1):
+        return self.augment(-half_steps)
+
+
+    #def diminish(self, chroma, set_or_single="set", prefer="flat"):
+    #    value = int(chroma) - 1
+    #    chromaset = self.chroma_by_value(value)
+    #    if set_or_single != "single":
+    #        return chromaset
+    #    else:
+    #        return chromaset.enharmonic_reduce()
 
     def ordered(self):
         """return a list of enharmonic chromasets"""
