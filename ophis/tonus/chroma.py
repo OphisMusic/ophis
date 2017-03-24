@@ -222,19 +222,16 @@ class ChromaSet(set):
         return self.augment(-half_steps)
 
 
-    #def diminish(self, chroma, set_or_single="set", prefer="flat"):
-    #    value = int(chroma) - 1
-    #    chromaset = self.chroma_by_value(value)
-    #    if set_or_single != "single":
-    #        return chromaset
-    #    else:
-    #        return chromaset.enharmonic_reduce()
-
     def ordered(self):
-        """return a list of enharmonic chromasets"""
+        """return an ordered dict of enharmonic chromasets"""
+        ordered = collections.OrderedDict()
+        for i in range (self.max_val + 1):
+            ordered[i] = self.chroma_by_value(i)
+        return ordered
 
-    def scale(self, prefer="sharps"):
+    def scale(self, modifier_preference="sharp"):
         """return a list of chroma"""
+        return [y.enharmonic_reduce(modifier_preference) for x,y in self.ordered().items()]
 
 
 
