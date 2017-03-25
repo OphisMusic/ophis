@@ -135,8 +135,11 @@ class ChromaSet(set):
 
     def __init__(self, chromae={}):
         super().__init__(chromae)
-        self.max_val = 0
-        self.modulo_base = 1
+        try:
+            self.max_val = self._max_val()
+        except:
+            self.max_val = 0
+        self.modulo_base = self._modulo_base()
 
     def add(self, arg):
         if type(arg) is Chroma:
@@ -201,9 +204,9 @@ class ChromaSet(set):
                 mod_vals.add(x.mod_val)
         for mod_val in sorted(mod_vals):
             if abs_vals:
-                groups[mod_val] = {x for x in self if abs(x.mod_val) == abs(mod_val)}
+                groups[mod_val] = ChromaSet({x for x in self if abs(x.mod_val) == abs(mod_val)})
             else:
-                groups[mod_val] = {x for x in self if x.mod_val == mod_val}
+                groups[mod_val] = ChromaSet({x for x in self if x.mod_val == mod_val})
 
         return collections.OrderedDict(sorted(groups.items()))
 
@@ -226,18 +229,29 @@ class ChromaSet(set):
         """return an ordered dict of enharmonic chromasets"""
         ordered = collections.OrderedDict()
         for i in range (self.max_val + 1):
-            ordered[i] = self.chroma_by_value(i)
+            x = self.chroma_by_value(i)
+            if len(x) > 0:
+                ordered[i] = x
         return ordered
 
-    def scale(self, modifier_preference="sharp"):
+    def chromatic_reduce(self, modifier_preference="sharp"):
+        return ChromaSet({y.enharmonic_reduce(modifier_preference) for x,y in self.ordered().items()})
+
+    def arpeggiate(self, direction="up", modifier_preference="sharp"):
         """return a list of chroma"""
-        return [y.enharmonic_reduce(modifier_preference) for x,y in self.ordered().items()]
+        arp = [y.enharmonic_reduce(modifier_preference) for x,y in self.ordered().items()]
+        if direction == "up":
+            return arp
+        if direction == "down":
+            return arp.reverse()
 
-
+    def diatonic(self):
+        return self.modifier_groups()[0]
 
 # Initialize the Western Chromae
 
 western_chroma_set = ChromaSet()
+wcs = western_chroma_set
 
 white_notes = {
  "C" : (0, 0, "do"),
