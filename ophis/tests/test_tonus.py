@@ -92,11 +92,11 @@ def test_subtract_integer_from_chroma():
             assert int(chroma - i) == (int(chroma) - i)%12
 
 def test_subtract_chroma_from_chroma():
-    assert ophis.E - ophis.C == 4
+    assert ophis.E - ophis.C == ophis.M3
     for x in ophis.western_chroma_set:
         for y in ophis.western_chroma_set:
             z = x - y
-            assert type(z) is int
+            assert type(z) is ophis.Interval
             assert x - z == y
             assert z + y == x
 
@@ -115,7 +115,7 @@ def test_diminish_equals_subtraction():
 def test_max_delta_is_tritone():
     for x in ophis.western_chroma_set:
         for y in ophis.western_chroma_set:
-            assert x.delta(y) <= 6
+            assert int(x.delta(y)) <= 6
 
 # Takes a long time... creates 6545 combinations
 def test_augment_chroma_set():

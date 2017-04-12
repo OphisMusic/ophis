@@ -2,6 +2,8 @@ import collections
 import itertools
 import sys
 
+from . import interval
+
 
 class Chroma():
     """Octave-agnostic pitch within a music system.
@@ -40,15 +42,21 @@ class Chroma():
             enharmonics = enharmonics.enharmonic_reduce()
         return enharmonics
 
-    def augment(self, half_steps=1, modifier_preference="sharp"):
+    def augment(self, aug_amount=1, modifier_preference="sharp"):
         """ Return a chroma higher than the one given.
 
         >>> C.augment()
         CSHARP
         """
-        return self.essential_set.chroma_by_value(int(self) + half_steps).enharmonic_reduce("sharp")
+        value_candidates =  self.essential_set.chroma_by_value(int(self) + int(aug_amount))
+        try:
+            letter_candidates = self.essential_set.chroma_by_letter( self.base_num + aug_amount.distance)
+            solution, = value_candidates & letter_candidates
+            return solution
+        except:
+            return value_candidates.enharmonic_reduce(modifier_preference)
 
-    def diminish(self, half_steps=1, modifier_preference="flat"):
+    def diminish(self, dim_amount=1, modifier_preference="flat"):
         """ Return a chroma higher than the one given.
 
         >>> C.diminish()
@@ -56,7 +64,13 @@ class Chroma():
         >>> D.diminish()
         DFLAT
         """
-        return self.augment(-half_steps, "flat")
+        try:
+            return self.augment(-dim_amount, "flat")
+        except TypeError:
+            value_candidates =  self.essential_set.chroma_by_value(int(self) - int(dim_amount))
+            letter_candidates = self.essential_set.chroma_by_letter( self.base_num - dim_amount.distance)
+            solution, = value_candidates & letter_candidates
+            return solution
 
     def delta(self, other):
         return min(self-other, other-self)
@@ -69,7 +83,7 @@ class Chroma():
             return chromaset
         except TypeError:
             try:
-                return self.augment(int(other))
+                return self.augment(other)
             except TypeError:
                 return NotImplemented
 
@@ -81,9 +95,15 @@ class Chroma():
         # chroma must belong to the same essential_set
         if type(other) is Chroma:
             if int(self) >= int(other):
-                return int(self) - int(other)
+                half_steps = int(self) - int(other)
+                distance = self.base_num - other.base_num
             else:
-                return (int(self) + self.essential_set.modulo_base) - int(other)
+                half_steps = (int(self) + self.essential_set.modulo_base) - int(other)
+                distance = self.base_num + 7 - other.base_num
+            number = distance + 1
+            return interval.Interval.get_interval(half_steps=half_steps, number=number)
+
+
 
         # chroma minus integer = chroma
         try:
@@ -160,6 +180,22 @@ class ChromaSet(set):
         value = int(value) % self.modulo_base
         return ChromaSet(x for x in self if x == value)
 
+    def chroma_by_letter(self, letter):
+        """return ChromaSet of all chromae with given letter or letter num
+
+        0:C
+        1:D
+        2:E
+        3:F
+        4:G
+        5:A
+        6:B
+        """
+        try:
+            return ChromaSet(x for x in self if x.base_num == int(letter)%7)
+        except ValueError:
+            return ChromaSet(x for x in self is x.base == letter)
+
     def enharmonic_reduce(self, modifier_preference="contextual"):
         # if there are no chroma in the set, raise value error
         if len(self) == 0:
@@ -222,7 +258,10 @@ class ChromaSet(set):
         return new_set
 
     def diminish(self, half_steps=1):
-        return self.augment(-half_steps)
+        new_set = ChromaSet()
+        for chroma in self:
+            new_set.add(chroma.diminish(half_steps))
+        return new_set
 
 
     def ordered(self):
