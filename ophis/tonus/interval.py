@@ -1,4 +1,5 @@
 import collections
+import sys
 
 
 class Quality():
@@ -9,7 +10,7 @@ class Quality():
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        cls.instances.add(self)
+        # instances.add(self)
 
         # from_major
         # from_minor
@@ -19,8 +20,12 @@ class Quality():
 
         # ? to_ etc...
 
+    def __repr__(self):
+        return self.name.upper()
 
-MAJOR = Quality(
+
+
+M = MAJOR = Quality(
     name = "major",
     from_major = 0,
     from_minor = 1,
@@ -29,7 +34,7 @@ MAJOR = Quality(
     from_perfect = None
 )
 
-MINOR = Quality(
+m = MINOR = Quality(
     name = "minor",
     from_major = -1,
     from_minor = 0,
@@ -38,7 +43,7 @@ MINOR = Quality(
     from_perfect = None
 )
 
-PERFECT = Quality(
+P = PERFECT = Quality(
     name = "perfect",
     from_major = None,
     from_minor = None,
@@ -47,7 +52,7 @@ PERFECT = Quality(
     from_perfect = 0
 )
 
-DIMINISHED = Quality(
+d = DIMINISHED = Quality(
     name = "diminished",
     from_major = -2,
     from_minor = -1,
@@ -56,7 +61,7 @@ DIMINISHED = Quality(
     from_perfect = -1
 )
 
-AUGMENTED = Quality(
+A = AUGMENTED = Quality(
     name = "augmented",
     from_major = 1,
     from_minor = 2,
@@ -79,7 +84,7 @@ class Interval():
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        cls.instances.add(self)
+        self.__class__.instances.add(self)
 
         # quality
         # number
@@ -109,19 +114,78 @@ class Interval():
         return self.half_steps
 
     def __repr__(self):
-        pass
+        return self.name
 
     def __str__(self):
         pass
 
+    def __hash__(self):
+        return hash((self.quality, self.number, self.half_steps))
 
+    @classmethod
+    def get_interval(cls, quality=None, number=None, half_steps=None):
+        interval, = [x for x in cls.instances
+            if (
+                (quality == x.quality and
+                    number == x.number) or
+                (quality == x.quality and
+                    half_steps == x.half_steps) or
+                (half_steps == x.half_steps and
+                    number == x.number)
+            )
+        ]
+        return interval
 
-
-
-
-
-
-
-intervals = {
-
+number_names = {
+1: "unison",
+2: "second",
+3: "third",
+4: "fourth",
+5: "fifth",
+6: "sixth",
+7: "seventh",
+8: "octave",
+9: "ninth",
+10: "tenth",
+11: "eleventh",
+12: "twelfth",
+13: "thirteenth"
 }
+
+
+
+#setup the intervals
+
+module = sys.modules[__name__]
+
+
+base_intervals = [
+    (P, 1, 0),
+    (M, 2, 2),
+    (M, 3, 4),
+    (P, 4, 5),
+    (P, 5, 7),
+    (M, 6, 9),
+    (M, 7, 11),
+    (P, 8, 12)
+]
+
+for q, n, s in list(base_intervals):
+    if q == P:
+        # make aug
+        base_intervals.append((A, n, s+1))
+        # make diminish
+        base_intervals.append((d, n, s-1))
+    if q == M:
+        # make minor
+        base_intervals.append((m, n, s-1))
+        # make aug
+        base_intervals.append((A, n, s+1))
+        # make dim
+        base_intervals.append((d, n, s-2))
+
+for q, n, s in base_intervals:
+    name = q.name[0] + str(n)
+    if q in (P, M, A):
+        name = name.capitalize()
+    setattr(module, name, Interval(name=name, quality=q, number=n, half_steps=s))

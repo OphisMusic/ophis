@@ -1,1 +1,1 @@
-from . import pitchclass
+from . import chroma
