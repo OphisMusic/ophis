@@ -140,3 +140,20 @@ def test_diminish_chroma_set():
         #    s_dim = s.diminish(i)
         #    for chroma in s:
         #        assert chroma.diminish(i) in s_dim
+
+def test_interval_inversions():
+    assert ophis.P1.inverted() is ophis.P8
+    assert ophis.M2.inverted() is ophis.m7
+    assert ophis.M3.inverted() is ophis.m6
+    assert ophis.P4.inverted() is ophis.P5
+    assert ophis.A4.inverted() is ophis.d5
+    assert ophis.P5.inverted() is ophis.P4
+    assert ophis.M6.inverted() is ophis.m3
+    assert ophis.M7.inverted() is ophis.m2
+    assert ophis.P8.inverted() is ophis.P1
+    for interval in ophis.Interval.instances:
+        assert interval.inverted().inverted() is interval
+
+def _pitch_ocatave_arithmetic():
+    assert ophis.Pitch(ophis.C, 1) - 1 == ophis.Pitch(ophis.B, 0)
+    assert ophis.Pitch(ophis.B, 2) + 1 == ophis.Pitch(ophis.C, 3)

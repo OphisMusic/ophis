@@ -94,9 +94,9 @@ class Chroma():
         # chroma minus chroma = integer, the distance (in half-steps) between them
         # chroma must belong to the same essential_set
         if type(other) is Chroma:
-            if int(self) >= int(other):
-                half_steps = int(self) - int(other)
+            if self.base_num >= other.base_num:
                 distance = self.base_num - other.base_num
+                half_steps = int(self) - int(other) % self.essential_set.modulo_base
             else:
                 half_steps = (int(self) + self.essential_set.modulo_base) - int(other)
                 distance = self.base_num + 7 - other.base_num
@@ -286,6 +286,15 @@ class ChromaSet(set):
 
     def diatonic(self):
         return self.modifier_groups()[0]
+
+    def __and__(self, other):
+        return ChromaSet(set(self) & set(other))
+
+    def __or__(self,other):
+        return ChromaSet(set(self)|set(other))
+
+    def __sub__(self, other):
+        return ChromaSet(set(self) - set(other))
 
 # Initialize the Western Chromae
 

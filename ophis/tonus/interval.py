@@ -1,5 +1,6 @@
 import collections
 import sys
+from functools import lru_cache
 
 
 class Quality():
@@ -129,20 +130,20 @@ class Interval():
         # full name - Major Third, Perfect Fifth
         # short name - M3, P5
 
-    def augmented(self):
-        raise NotImplementedError
+    def augmented(self, distance=1):
+        return self.get_interval(number=self.number, half_steps = self.half_steps+int(distance))
 
-    def diminished(self):
-        raise NotImplementedError
+    def diminished(self, distance=1):
+        return self.get_interval(number=self.number, half_steps = self.half_steps-int(distance))
 
     def enharmonics(self):
-        raise NotImplementedError
+        return self.get_interval(half_steps=self.half_steps)
 
     def inverted(self):
-        new_qual = self.quality.inverse()
-        new_number = 9 - self.number
-        new_interval, = {x for x in cls.instances if x.quality == new_qual and x.number == new_number}
-        return new_interval
+        return self.get_interval(
+            quality = self.quality.inverse,
+            number = 9 - self.number
+        )
 
     def __eq__(self, other):
         return int(self) == int(other)
@@ -161,29 +162,62 @@ class Interval():
         return self.name
 
     def __str__(self):
-        pass
+        return " ".join([
+            self.quality.name,
+            number_names[self.number]
+            ]).capitalize()
 
     def __hash__(self):
         return hash((self.quality, self.number, self.half_steps))
 
+    def __abs__(self):
+        while int(self) > 12:
+            self = self.diminshed(P8)
+        return min(self, self.inverted())
+
     @classmethod
     def get_interval(cls, quality=None, number=None, half_steps=None):
-        number = number%7
+
         try:
-            interval, = [x for x in cls.instances
-                if (
-                    (quality == x.quality and
-                        number == x.number) or
-                    (quality == x.quality and
-                        half_steps == x.half_steps) or
-                    (half_steps == x.half_steps and
-                        number == x.number)
-                )
-            ]
+             half_steps = half_steps%12
+        except:
+            pass
+
+        try:
+            interval, = cls.get_intervals(quality=quality, number=number, half_steps=half_steps)
+
         except ValueError:
             candidates = [x for x in cls.instances if half_steps == x.half_steps]
             interval, *_ = sorted(candidates, key=lambda x: x.quality.priority)
+
         return interval
+
+
+
+    @classmethod
+    def get_intervals(cls, *, quality=None, number=None, half_steps=None):
+
+        candidate_sets = []
+
+        if quality is not None:
+            candidate_sets.append({x for x in cls.instances if x.quality == quality})
+
+        if number is not None:
+            candidate_sets.append({x for x in cls.instances if x.number == number})
+
+        if half_steps is not None:
+            candidate_sets.append({x for x in cls.instances if x.half_steps == half_steps})
+
+        candidate_sets = [x for x in candidate_sets if len(x) > 0]
+
+        return set.intersection(*candidate_sets)
+
+
+    @staticmethod
+    def abs_hs(half_steps):
+        pass
+
+
 
 number_names = {
 1: "unison",
@@ -246,3 +280,19 @@ for q, n, s in base_intervals:
     if q in (P, M, AUG, DUBAUG):
         name = name.capitalize()
     setattr(module, name, Interval(name=name, quality=q, number=n, half_steps=s))
+
+
+
+## Intervals of more than one octave
+
+#@lru_cache(maxsize=None, typed=False)
+#class CompoundInterval():
+
+#    def __init__(self, simple_interval, octaves=0):
+
+        # make "singleton"
+
+#        self.simple_interval = simple_interval
+#        self.octaves = octaves
+
+    #def augmented(self, )
