@@ -157,6 +157,11 @@ class Interval():
     def __lt__(self, other):
         return int(self) < int(other)
 
+    def __le__(self, other):
+        return int(self) <= int(other)
+
+    def __ge__(self, other):
+        return int(self) >= int(other)
 
     def __repr__(self):
         return self.name
