@@ -2,6 +2,8 @@ import collections
 import itertools
 import sys
 
+from ophis import oph_utils
+
 from . import interval
 
 
@@ -151,14 +153,17 @@ class Chroma():
         return hash((self.name, self.base_num, self.base_value, self.mod_val))
 
     #
+    @oph_utils.method_dispatch
     def __call__(self, x):
-        try:
-            return self.call_function(self, x)
-        except AttributeError as err:
-            if callable(x):
-                self.call_function = x
-            else:
-                raise TypeError from e
+        return self
+
+        #try:
+        #    return self.call_function(self, x)
+        #except AttributeError as err:
+        #    if callable(x):
+        #        self.call_function = x
+        #    else:
+        #        raise TypeError from e
 
 
 

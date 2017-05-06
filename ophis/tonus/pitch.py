@@ -12,5 +12,5 @@ class Pitch():
     def __repr__(self):
         return self.chroma.__repr__() + str(self.octave)
 
-for chroma in ch.wcs:
-    chroma(Pitch)
+# Calling a Chroma instance with an integer returns a Pitch. 
+ch.Chroma.__call__.register(int, Pitch)
