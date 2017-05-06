@@ -2,6 +2,24 @@ import collections
 import sys
 from functools import lru_cache
 
+from ophis import oph_utils
+
+number_names = [
+None,
+"unison",
+"second",
+"third",
+"fourth",
+"fifth",
+"sixth",
+"seventh",
+"octave",
+"ninth",
+"tenth",
+"eleventh",
+"twelfth",
+"thirteenth"
+]
 
 class Quality():
 
@@ -24,10 +42,21 @@ class Quality():
     def __repr__(self):
         return self.name.upper()
 
+    def __call__(self, number, octaves=None):
+        interval = Interval(quality=self, number=number)
+        if octaves is not None:
+            return QualifiedInterval(interval,octaves)
+        return interval
+
+    def __getattr__(self, number_name):
+
+        return Interval(
+            quality=self, number=number_names.index(number_name.lower())
+        )
 
 
-M = MAJ = MAJOR = Quality(
-    name = "major",
+M = Major = MAJOR = Quality(
+    name = "Major",
     short_name = "M",
     from_major = 0,
     from_minor = 1,
@@ -48,8 +77,8 @@ m = minor = MINOR = Quality(
     priority = 2
 )
 
-P = PERFECT = Quality(
-    name = "perfect",
+P = Perfect = PERFECT = Quality(
+    name = "Perfect",
     short_name = "P",
     from_major = None,
     from_minor = None,
@@ -59,7 +88,7 @@ P = PERFECT = Quality(
     priority = 0,
 )
 
-d = DIMINISHED = Quality(
+d = dim = diminished = DIMINISHED = Quality(
     name = "diminished",
     short_name = "d",
     from_major = -2,
@@ -70,8 +99,8 @@ d = DIMINISHED = Quality(
     priority = 3
 )
 
-AUG = AUGMENTED = Quality(
-    name = "augmented",
+AUG = Aug = Augmented = AUGMENTED = Quality(
+    name = "Augmented",
     short_name = "A",
     from_major = 1,
     from_minor = 2,
@@ -92,7 +121,7 @@ DUBAUG = DOUBLE_AUGMENTED = Quality(
     priority = 6
 )
 
-DUBDIM = DOUBLE_DIMINISHED = Quality(
+DUBDIM = dubdim = DOUBLE_DIMINISHED = Quality(
     name = "double diminished",
     short_name = "dubdim",
     from_major = -3,
@@ -112,17 +141,30 @@ DOUBLE_DIMINISHED.inverse = DOUBLE_AUGMENTED
 DOUBLE_AUGMENTED.inverse = DOUBLE_DIMINISHED
 
 
-class Interval():
+
+class Interval(oph_utils.IntegerComparisonMixin):
 
     instances = set()
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    def __new__(cls, **kwargs):
 
-        self.distance = self.number - 1
+        try:
+            interval, = [x for x in cls.instances
+                if x.quality == kwargs["quality"] and
+                x.number == kwargs["number"]]
+        except:
+            interval = super().__new__(cls)
+            for key, value in kwargs.items():
+                setattr(interval, key, value)
 
-        self.__class__.instances.add(self)
+            interval.distance = interval.number - 1
+
+            cls.instances.add(interval)
+
+        return interval
+
+    ## def __init__(self, **kwargs):
+
 
         # quality
         # number
@@ -131,10 +173,18 @@ class Interval():
         # short name - M3, P5
 
     def augmented(self, distance=1):
-        return self.get_interval(number=self.number, half_steps = self.half_steps+int(distance))
+        try:
+            number = self.number + distance.number - 1
+        except AttributeError:
+            number = self.number
+        return self.get_interval(number=number, half_steps = self.half_steps+int(distance))
 
     def diminished(self, distance=1):
-        return self.get_interval(number=self.number, half_steps = self.half_steps-int(distance))
+        try:
+            number = self.number - distance.number + 1
+        except AttributeError:
+            number = self.number
+        return self.get_interval(number=number, half_steps = self.half_steps-int(distance))
 
     def enharmonics(self):
         return self.get_interval(half_steps=self.half_steps)
@@ -145,26 +195,18 @@ class Interval():
             number = 9 - self.number
         )
 
-    def __eq__(self, other):
-        return int(self) == int(other)
+    def __invert__(self):
+        return self.inverted()
 
-    def __int__(self):
-        return self.half_steps
-
-    def __gt__(self, other):
-        return int(self) > int(other)
-
-    def __lt__(self, other):
-        return int(self) < int(other)
-
-    def __le__(self, other):
-        return int(self) <= int(other)
-
-    def __ge__(self, other):
-        return int(self) >= int(other)
+    # deleted comparison operators
 
     def __repr__(self):
-        return self.name
+        return "".join([
+            self.quality.name,
+            "(",
+            str(self.number),
+            ")"
+        ])
 
     def __str__(self):
         return " ".join([
@@ -179,6 +221,9 @@ class Interval():
         while int(self) > 12:
             self = self.diminshed(P8)
         return min(self, self.inverted())
+
+    def __xor__(self, octaves):
+        return QualifiedInterval(self, octaves)
 
     @classmethod
     def get_interval(cls, quality=None, number=None, half_steps=None):
@@ -224,21 +269,7 @@ class Interval():
 
 
 
-number_names = {
-1: "unison",
-2: "second",
-3: "third",
-4: "fourth",
-5: "fifth",
-6: "sixth",
-7: "seventh",
-8: "octave",
-9: "ninth",
-10: "tenth",
-11: "eleventh",
-12: "twelfth",
-13: "thirteenth"
-}
+
 
 
 
@@ -290,14 +321,56 @@ for q, n, s in base_intervals:
 
 ## Intervals of more than one octave
 
-#@lru_cache(maxsize=None, typed=False)
-#class CompoundInterval():
+@lru_cache(maxsize=None, typed=False)
+class QualifiedInterval(oph_utils.IntegerComparisonMixin):
 
-#    def __init__(self, simple_interval, octaves=0):
+    def __init__(self, interval, octaves=0):
+        self.interval = interval
+        self.octaves = octaves
 
-        # make "singleton"
+    def augmented(self, distance=1):
+        if int(distance) == 0:
+            return self
 
-#        self.simple_interval = simple_interval
-#        self.octaves = octaves
+        try:
+            octaves = distance.octaves
+        except(AttributeError):
+            octaves = 0
 
-    #def augmented(self, )
+
+        interval = self.interval.augmented(distance)
+        octaves = self.octaves + octaves
+        if interval <= self.interval:
+            octaves = octaves + 1
+
+
+        return self.__class__(interval, octaves)
+
+    def diminished(self, distance=1):
+        if int(distance) > int(self):
+            raise ValueError("Distance to diminish by is larger than interval.")
+        if int(distance) == 0:
+            return self
+
+        try:
+            octaves = distance.octaves
+        except(AttributeError):
+            octaves = 0
+
+
+        interval = self.interval.diminished(distance)
+        octaves = self.octaves - octaves
+        if interval >= self.interval:
+            octaves = octaves - 1
+
+        return self.__class__(interval, octaves)
+
+
+    def octv(self, octaves=1):
+        return self.__class__(self.interval, (self.octaves + octaves))
+
+    def __repr__(self):
+        return self.interval.__repr__() + "^" + str(self.octaves)
+
+    def __int__(self):
+        return int(self.interval) + self.octaves*int(P8)

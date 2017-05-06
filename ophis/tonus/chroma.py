@@ -150,6 +150,19 @@ class Chroma():
     def __hash__(self):
         return hash((self.name, self.base_num, self.base_value, self.mod_val))
 
+    #
+    def __call__(self, x):
+        try:
+            return self.call_function(self, x)
+        except AttributeError as err:
+            if callable(x):
+                self.call_function = x
+            else:
+                raise TypeError from e
+
+
+
+
 
 class ChromaSet(set):
 
@@ -298,8 +311,8 @@ class ChromaSet(set):
 
 # Initialize the Western Chromae
 
-western_chroma_set = ChromaSet()
-wcs = western_chroma_set
+
+wcs = western_chroma_set = ChromaSet()
 
 white_notes = {
  "C" : (0, 0, "do"),
