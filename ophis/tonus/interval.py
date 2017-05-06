@@ -43,19 +43,48 @@ class Quality():
         return self.name.upper()
 
     def __call__(self, number, octaves=None):
+        """
+        Returns an interval.
+
+        Passing in an integer only returns a (plain) Interval. Passing in two integers (number, octaves) returns a QualifiedInterval.
+        """
+
+        # all the things that could go wrong
+
+        number = oph_utils.oph_int(number)
+
+        if number > 13:
+            raise ValueError("Intervals above 13th are not permitted. Create a QualifiedInterval with Quality(number, octave).")
+
+        if number < 1:
+            raise ValueError("Number must be between 1-13.")
+
+        # Make an Interval
+        if number > 8:
+            number = number - 7
+            try:
+                octaves = octaves + 1
+            except TypeError:
+                octaves = 1
+
         interval = Interval(quality=self, number=number)
+
         if octaves is not None:
             return QualifiedInterval(interval,octaves)
         return interval
 
     def __getattr__(self, number_name):
 
-        return Interval(
-            quality=self, number=number_names.index(number_name.lower())
-        )
+        try:
+            return Interval(
+                quality = self,
+                number = oph_utils.oph_int(number_name)
+            )
+        except ValueError as err:
+            raise AttributeError("Quality does not have attribute " + number_name + ".") from err
 
 
-M = Major = MAJOR = Quality(
+Major = MAJOR = Quality(
     name = "Major",
     short_name = "M",
     from_major = 0,
@@ -66,7 +95,7 @@ M = Major = MAJOR = Quality(
     priority = 1,
 )
 
-m = minor = MINOR = Quality(
+minor = MINOR = Quality(
     name = "minor",
     short_name = "m",
     from_major = -1,
@@ -77,7 +106,7 @@ m = minor = MINOR = Quality(
     priority = 2
 )
 
-P = Perfect = PERFECT = Quality(
+Perfect = PERFECT = Quality(
     name = "Perfect",
     short_name = "P",
     from_major = None,
@@ -88,7 +117,7 @@ P = Perfect = PERFECT = Quality(
     priority = 0,
 )
 
-d = dim = diminished = DIMINISHED = Quality(
+diminished = DIMINISHED = Quality(
     name = "diminished",
     short_name = "d",
     from_major = -2,
@@ -99,7 +128,7 @@ d = dim = diminished = DIMINISHED = Quality(
     priority = 3
 )
 
-AUG = Aug = Augmented = AUGMENTED = Quality(
+Augmented = AUGMENTED = Quality(
     name = "Augmented",
     short_name = "A",
     from_major = 1,
@@ -110,7 +139,7 @@ AUG = Aug = Augmented = AUGMENTED = Quality(
     priority = 4
 )
 
-DUBAUG = DOUBLE_AUGMENTED = Quality(
+DubAug = DOUBLE_AUGMENTED = Quality(
     name = "double augmented",
     short_name = "DUBAUG",
     from_major = 2,
@@ -121,7 +150,7 @@ DUBAUG = DOUBLE_AUGMENTED = Quality(
     priority = 6
 )
 
-DUBDIM = dubdim = DOUBLE_DIMINISHED = Quality(
+dubdim = DOUBLE_DIMINISHED = Quality(
     name = "double diminished",
     short_name = "dubdim",
     from_major = -3,
@@ -142,7 +171,7 @@ DOUBLE_AUGMENTED.inverse = DOUBLE_DIMINISHED
 
 
 
-class Interval(oph_utils.IntegerComparisonMixin):
+class Interval(oph_utils.IntegerComparisonMixin, oph_utils.ArithmeticMixin):
 
     instances = set()
 
@@ -219,7 +248,7 @@ class Interval(oph_utils.IntegerComparisonMixin):
 
     def __abs__(self):
         while int(self) > 12:
-            self = self.diminshed(P8)
+            self = self.DIMINISHED(P8)
         return min(self, self.inverted())
 
     def __xor__(self, octaves):
@@ -279,41 +308,41 @@ module = sys.modules[__name__]
 
 
 base_intervals = [
-    (P, 1, 0),
-    (M, 2, 2),
-    (M, 3, 4),
-    (P, 4, 5),
-    (P, 5, 7),
-    (M, 6, 9),
-    (M, 7, 11),
-    (P, 8, 12)
+    (PERFECT, 1, 0),
+    (MAJOR, 2, 2),
+    (MAJOR, 3, 4),
+    (PERFECT, 4, 5),
+    (PERFECT, 5, 7),
+    (MAJOR, 6, 9),
+    (MAJOR, 7, 11),
+    (PERFECT, 8, 12)
 ]
 
 for q, n, s in list(base_intervals):
-    if q == P:
+    if q == PERFECT:
         # make aug
-        base_intervals.append((AUG, n, s+1))
+        base_intervals.append((AUGMENTED, n, s+1))
         # make double aug
-        base_intervals.append((DUBAUG, n, s+2))
+        base_intervals.append((DOUBLE_AUGMENTED, n, s+2))
         # make diminish
-        base_intervals.append((d, n, s-1))
+        base_intervals.append((DIMINISHED, n, s-1))
         # make double diminish
-        base_intervals.append((DUBDIM, n, s-2))
-    if q == M:
+        base_intervals.append((DOUBLE_DIMINISHED, n, s-2))
+    if q == MAJOR:
         # make minor
-        base_intervals.append((m, n, s-1))
+        base_intervals.append((MINOR, n, s-1))
         # make aug
-        base_intervals.append((AUG, n, s+1))
+        base_intervals.append((AUGMENTED, n, s+1))
         # make aug
-        base_intervals.append((DUBAUG, n, s+2))
+        base_intervals.append((DOUBLE_AUGMENTED, n, s+2))
         # make dim
-        base_intervals.append((d, n, s-2))
+        base_intervals.append((DIMINISHED, n, s-2))
         # make dim
-        base_intervals.append((DUBDIM, n, s-3))
+        base_intervals.append((DOUBLE_DIMINISHED, n, s-3))
 
 for q, n, s in base_intervals:
     name = q.short_name + str(n)
-    if q in (P, M, AUG, DUBAUG):
+    if q in (PERFECT, MAJOR, AUGMENTED, DOUBLE_AUGMENTED):
         name = name.capitalize()
     setattr(module, name, Interval(name=name, quality=q, number=n, half_steps=s))
 
@@ -322,7 +351,10 @@ for q, n, s in base_intervals:
 ## Intervals of more than one octave
 
 @lru_cache(maxsize=None, typed=False)
-class QualifiedInterval(oph_utils.IntegerComparisonMixin):
+class QualifiedInterval(oph_utils.IntegerComparisonMixin, oph_utils.ArithmeticMixin):
+    """
+    An interval with an octave.
+    """
 
     def __init__(self, interval, octaves=0):
         self.interval = interval
@@ -368,6 +400,7 @@ class QualifiedInterval(oph_utils.IntegerComparisonMixin):
 
     def octv(self, octaves=1):
         return self.__class__(self.interval, (self.octaves + octaves))
+
 
     def __repr__(self):
         return self.interval.__repr__() + "^" + str(self.octaves)

@@ -24,6 +24,13 @@ class IntegerComparisonMixin():
     def __ge__(self, other):
         return int(self) >= int(other)
 
+class ArithmeticMixin():
+    def __add__(self, other):
+        return self.augmented(other)
+
+    def __sub__(self, other):
+        return self.diminished(other)
+
 
 def method_dispatch(func):
     """
@@ -36,3 +43,31 @@ def method_dispatch(func):
     wrapper.register = dispatcher.register
     update_wrapper(wrapper, func)
     return wrapper
+
+# Casting Strings to Ints
+
+number_names = [
+None,
+"unison",
+"second",
+"third",
+"fourth",
+"fifth",
+"sixth",
+"seventh",
+"octave",
+"ninth",
+"tenth",
+"eleventh",
+"twelfth",
+"thirteenth"
+]
+
+def oph_int(n):
+    try:
+        return int(n)
+    except ValueError as err:
+        try:
+            return number_names.index(n.lower())
+        except:
+            raise err
