@@ -350,7 +350,7 @@ for q, n, s in base_intervals:
 
 ## Intervals of more than one octave
 
-@lru_cache(maxsize=None, typed=False)
+@lru_cache(maxsize=None, typed=True)
 class QualifiedInterval(oph_utils.IntegerComparisonMixin, oph_utils.ArithmeticMixin):
     """
     An interval with an octave.

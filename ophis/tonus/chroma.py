@@ -10,33 +10,188 @@ from . import interval
 class Chroma():
     """Octave-agnostic pitch within a music system.
 
-    This is the reference implementation for Western music.
+    Chroma is the idea of a note (C, BFLAT),
+    rather than a specific pitch (Middle C). 
 
-    Each particular musical system will probably need to
-    implement its own chroma-like class.
+    Chromae are initialized and assigned to constants at load time:
+
+        A
+        AFLAT
+        ASHARP
+        ADOUBLEFLAT
+        ADOUBLESHARP
+        etc...
+
+    This module contains an implementation for Western music.
+    Any particular musical system will need to implement its 
+    own chroma-like class.
     """
 
     def __init__(self, attrs):
+        """Build and return a Chroma.
+
+        Chromae are built from a set of key value pairs, most of which become attributes.
+
+            name (str): the full name, usually ALL CAPS. ex: `DSHARP`
+            
+                The name is also used as the module-level constant. 
+                
+                >>> DSHARP.name
+                'DSHARP'            
+
+            base (str): the base (unmodified) Chroma letter name.
+            
+                >>> DSHARP.base
+                'D'
+
+            base_num (int): the ordinal number of the base, within the set of all bases.
+            
+                >>> C.base_num
+                0
+                
+                >>> CSHARP.base_num
+                0
+                
+                >>> D.base_num
+                1
+                
+                >>> DSHARP.base_num
+                1
+            
+            base_value (int): the integer value of the base, in halfsteps from the origin.
+                                
+                >>> C.base_value
+                0
+                
+                >>> D.base_value
+                2
+                
+                >>> DSHARP.base_value
+                2
+                
+            value (int): the absolute value of the chroma, in halfsteps from the origin.
+                
+                >>> C.value
+                0
+                
+                >>> CSHARP.value
+                1
+                
+                >>> DFLAT.value
+                1
+                
+                >>> D.value
+                2
+                
+                
+            mod_val (int): the positive or negative value of the sharp or flat modifier.
+                
+                >>> D.mod_val
+                0
+                
+                >>> DSHARP.mod_val
+                1
+                
+                >>> DFLAT.mod_val
+                -1
+                
+                >>> DDOUBLESHARP.mod_val
+                2
+                
+                >>> DDOUBLEFLAT.mod_val
+                -2
+                
+            unicode (str): display friendly representation using Unicode music symbols.
+                
+                >>> DSHARP.unicode
+                'D♯'
+                
+                >>> DFLAT.unicode
+                'D♭'
+                
+                >>> DDOUBLESHARP.unicode
+                'D𝄪'
+                
+                >>> DDOUBLEFLAT.unicode
+                'D𝄫'
+            
+            ascii (str): display friendy representation using ASCII only.
+            
+                >>> DSHARP.ascii
+                'D#'
+                
+                >>> DFLAT.ascii
+                'Db'
+                
+                >>> DDOUBLESHARP.ascii
+                'D##'
+                
+                >>> DDOUBLEFLAT.ascii
+                'Dbb'
+                
+            verbose (str): spelled out representation, similar to `name`, but 
+                spaces separating words. Useful for screen readers and 
+                voice-to-text.
+                
+                >>> DSHARP.verbose
+                'D SHARP'
+                
+                >>> DDOUBLESHARP.verbose
+                'D DOUBLE SHARP'
+                
+            ly (str): Lilypond representation.
+                
+                >>> D.ly
+                'd'
+                
+                >>> DSHARP.ly
+                'dis'
+                
+                >>> DFLAT.ly
+                'des'
+                
+            s9n (str): Solmization in a fixed-do solfege system.
+            
+                >>> D.s9n
+                're'
+                
+                >>> DSHARP.s9n
+                'ri'
+                
+            essential_set (ChromaSet): a set of all Chroma in this musical system.
+            
+                >>> D.essential_set is DSHARP.essential_set
+                True 
+
+       """
+        
         for key, value in attrs.items():
             setattr(self, key, value)
-
-            # name -- the full name, usually ALL CAPS - DSHARP
-            # base -- the base of the name - D
-            # base_num -- the ordinal number of the base, within the set of all bases - 2
-            # base_value -- the absolute value of the base, within the set of all pitchclasses - 3
-            # value -- the ordinal number of the actual pitchclass - 4
-            # mod_val -- the positive or negative value of the modifier - 1
-            # unicode -- for printing
-            # ascii -- for printing
-            # verbose -- for printing
-            # ly -- for outputting to lilypond
-            # s9n -- solmization; solfege (or other system) syllable
-            # essential_set -- a ChromaSet; the musical domain of the pitchclass being created. For example, Conventional Western Music has an essential set of 12 notes.
-
-        # The essential set is a ChromaSet that contains all the chroma for a particular musical system. The essential set for Western music is initialized as a module global after the ChromaSet class definition.
         self.essential_set.add(self)
 
     def enharmonics(self, include_original=True, return_type="set"):
+        """Return a Chromaset containing chroma enharmonic with self.
+        
+        Args:
+            
+            include_original (:obj:`bool`, optional): Whether to include self 
+                in returned set. Defaults to True.
+            
+            return_type (:obj:`str`, optional): Whether to return a set (default)
+                or a single Chroma. (Should be deprecated.)
+                
+        Returns:
+        
+            ChromaSet: a collection of Chroma with the same integer value as self.
+            
+        Examples:
+        
+            >>> DSHARP.enharmonics()
+            ChromaSet(DSHARP, EFLAT, FDOUBLEFLAT)
+            
+            >>> DSHARP.enharmonics(False)
+            ChromaSet(EFLAT, FDOUBLEFLAT)     
+        """
         enharmonics = self.essential_set.chroma_by_value(self)
         if include_original == False:
             enharmonics.discard(self)
@@ -44,11 +199,39 @@ class Chroma():
             enharmonics = enharmonics.enharmonic_reduce()
         return enharmonics
 
+    def enharmonic():
+        """Return a single Chroma, enharmonic with self.
+        
+        Examples:
+        
+            >>> DSHARP.enharmonic()
+            EFLAT 
+        """
     def augment(self, aug_amount=1, modifier_preference="sharp"):
-        """ Return a chroma higher than the one given.
+        """Return a chroma higher than the one given.
 
-        >>> C.augment()
-        CSHARP
+        Args:
+            aug_amount (:obj:`int`, :obj:`Interval`, or obj with an ``int`` value; optional): the distance to augment by. 
+                Integer values are interpreted as half steps. Defaults to 1.
+            modifier_preference (:obj:`str`, ``'sharp'`` or ``'flat'``; optional)
+                Defaults to ``'sharp'``. 
+
+        Examples:
+
+            >>> C.augment()
+            CSHARP
+
+            >>> C.augment(1, 'flat')
+            DFLAT
+
+            >>> D.augment(2)
+            E
+
+            >>> E.augment()
+            F
+
+            >>> E.augment(2, 'flat')
+            GFLAT
         """
         value_candidates =  self.essential_set.chroma_by_value(int(self) + int(aug_amount))
         try:

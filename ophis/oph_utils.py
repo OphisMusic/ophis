@@ -71,3 +71,15 @@ def oph_int(n):
             return number_names.index(n.lower())
         except:
             raise err
+
+@singledispatch
+def octave_reduce():
+    pass
+
+@octave_reduce.register(int)
+def _(x, octv_size=12):
+    octaves = 0
+    while x >= octv_size:
+        x = x - 12
+        octaves = octaves + 1
+    return x, octaves
