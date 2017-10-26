@@ -207,11 +207,11 @@ class Chroma():
             >>> DSHARP.enharmonic()
             EFLAT 
         """
-    def augment(self, aug_amount=1, modifier_preference="sharp"):
+    def augment(self, magnitude=1, modifier_preference="sharp"):
         """Return a chroma higher than the one given.
 
         Args:
-            aug_amount (:obj:`int`, :obj:`Interval`, or obj with an ``int`` value; optional): the distance to augment by. 
+            magnitude (:obj:`int`, :obj:`Interval`, or obj with an ``int`` value; optional): the distance to augment by. 
                 Integer values are interpreted as half steps. Defaults to 1.
             modifier_preference (:obj:`str`, ``'sharp'`` or ``'flat'``; optional)
                 Defaults to ``'sharp'``. 
@@ -233,16 +233,17 @@ class Chroma():
             >>> E.augment(2, 'flat')
             GFLAT
         """
-        value_candidates =  self.essential_set.chroma_by_value(int(self) + int(aug_amount))
+        
+        value_candidates =  self.essential_set.chroma_by_value(int(self) + int(magnitude))
         try:
-            letter_candidates = self.essential_set.chroma_by_letter( self.base_num + aug_amount.distance)
+            letter_candidates = self.essential_set.chroma_by_letter( self.base_num + magnitude.distance)
             solution, = value_candidates & letter_candidates
             return solution
         except:
             return value_candidates.enharmonic_reduce(modifier_preference)
 
-    def diminish(self, dim_amount=1, modifier_preference="flat"):
-        """ Return a chroma higher than the one given.
+    def diminish(self, magnitude=1, modifier_preference="flat"):
+        """ Return a chroma lower than the one given.
 
         >>> C.diminish()
         B
@@ -252,13 +253,13 @@ class Chroma():
         try:
             return self.augment(-dim_amount, "flat")
         except TypeError:
-            value_candidates =  self.essential_set.chroma_by_value(int(self) - int(dim_amount))
-            letter_candidates = self.essential_set.chroma_by_letter( self.base_num - dim_amount.distance)
+            value_candidates =  self.essential_set.chroma_by_value(int(self) - int(magnitude))
+            letter_candidates = self.essential_set.chroma_by_letter( self.base_num - magnitude.distance)
             solution, = value_candidates & letter_candidates
             return solution
 
     def delta(self, other):
-        return min(self-other, other-self)
+        return min(self - other, other - self)
 
     def __add__(self, other):
         try:
