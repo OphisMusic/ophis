@@ -169,6 +169,12 @@ class Chroma():
             setattr(self, key, value)
         self.essential_set.add(self)
 
+    def __setattr__(self, attr, value):
+        if hasattr(self, attr):
+            raise AttributeError("You cannot reassign attributes of a Chroma.")
+        else:
+            self.__dict__[attr] = value
+
     def enharmonics(self, include_original=True, return_type="set"):
         """Return a Chromaset containing chroma enharmonic with self.
         
@@ -251,7 +257,7 @@ class Chroma():
         DFLAT
         """
         try:
-            return self.augment(-dim_amount, "flat")
+            return self.augment(-magnitude, "flat")
         except TypeError:
             value_candidates =  self.essential_set.chroma_by_value(int(self) - int(magnitude))
             letter_candidates = self.essential_set.chroma_by_letter( self.base_num - magnitude.distance)
@@ -351,7 +357,7 @@ class Chroma():
 
 
 
-
+# end class Chroma
 
 class ChromaSet(set):
 
@@ -498,6 +504,20 @@ class ChromaSet(set):
     def __sub__(self, other):
         return ChromaSet(set(self) - set(other))
 
+
+
+#class Modifier():
+#    """ Sharps and flats.
+#    """
+#
+#    def __init__():
+
+  
+
+
+
+
+    
 # Initialize the Western Chromae
 
 
